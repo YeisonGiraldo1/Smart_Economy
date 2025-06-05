@@ -41,34 +41,40 @@ This notebook aims to perform an Exploratory Data Analysis (EDA) on the global d
 ***Python libraries, also known as modules, are predefined sets of code that extend the basic functionality of the language.***
 """
 
-#IMPORT THE NECESSARY LIBRARIES
+# IMPORT THE NECESSARY LIBRARIES
 
-#DATA ANALYSIS
-import pandas as pd #library (pandas) for data analysis
+# --- DATA ANALYSIS ---
+import pandas as pd  # Library for data manipulation and analysis (handling DataFrames and CSVs)
+import numpy as np  # Library for numerical computing, used for working with arrays, statistics, etc.
 
+# --- CHARTS AND VISUALIZATION ---
+import matplotlib.pyplot as plt  # Library for creating static, animated, and interactive plots
+import seaborn as sns  # Library for statistical data visualization, built on top of matplotlib
 
-import numpy as np
+# --- MACHINE LEARNING PREPROCESSING ---
+from sklearn.preprocessing import StandardScaler, LabelEncoder  # For feature scaling and encoding categorical variables
+from sklearn.preprocessing import MinMaxScaler  # Scales numerical features to a specific range (commonly 0 to 1)
 
-#CHARTS
-import matplotlib.pyplot as plt #Python library specialized in creating two-dimensional graphics.
-import seaborn as sns # Libreria para visualizar datos estadísticos
+# --- MACHINE LEARNING ALGORITHMS ---
+from sklearn.linear_model import LinearRegression  # Linear regression algorithm for predicting continuous values
+from sklearn.ensemble import RandomForestRegressor  # Ensemble algorithm based on decision trees (Random Forest)
 
+# --- MODEL TRAINING AND EVALUATION ---
+from sklearn.model_selection import train_test_split  # To split the dataset into training and testing sets
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score  # Metrics for evaluating regression models
 
+# --- ADVANCED VISUALIZATION ---
+import plotly.graph_objects as go  # For building interactive visualizations (customizable and dynamic)
+import plotly.express as px  # Simplified interface for creating Plotly charts quickly
+from yellowbrick.regressor import PredictionError  # Tool to visualize prediction error of regression models
 
-#PARA ALGORITMOS DE MACHINE LEARNING
-from sklearn.preprocessing import StandardScaler, LabelEncoder # Libreria para realizar codificación de variables categóricas
-from sklearn.preprocessing import MinMaxScaler #para escalado de caracteristicas numericas
-from sklearn.linear_model import LinearRegression #para algotitos de regresion
+# --- STATISTICS ---
+import scipy.stats as stats  # For statistical functions (e.g., normality tests, correlations, etc.)
 
-
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-
-
-import plotly.graph_objects as go
-import plotly.express as px
-from yellowbrick.regressor import PredictionError
+# --- XGBOOST ---
+from xgboost import XGBRegressor  # Extreme Gradient Boosting algorithm (high-performance regression model)
+from sklearn.model_selection import train_test_split  # (already imported above) - split data for training/testing
+from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error  # (already imported above) - evaluation metrics
 
 #import de dataset the main dataset
 main_database = pd.read_csv("/content/database/Global_Development_Indicators_2000_2020.csv") #file path
@@ -781,9 +787,23 @@ Esto significa que tu modelo tiende a subestimar el PIB per cápita para los pa�
 **Presencia de valores negativos predichos:**
 
 Hay puntos donde el valor predicho es menor que cero, lo cual es ilógico para el PIB per cápita. Esto es una limitación importante de LinearRegression.
-
-#RANDOM FOREST REGRESSION 1.0
 """
+
+#SE AGREGA (NUEVO)
+
+
+# 6. Plot Residuals vs Predicted Values
+plt.figure(figsize=(10, 6))
+plt.scatter(y_pred, residuals, color='purple', alpha=0.6)
+plt.axhline(y=0, color='red', linestyle='--')
+plt.xlabel("Predicted GDP per Capita")
+plt.ylabel("Residual")
+plt.title("Residuals vs Predicted Values (Linear Regression)")
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+
+"""#RANDOM FOREST REGRESSION 1.0"""
 
 # Split the data (70% train, 30% test)
 X_train, X_test, y_train, y_test = train_test_split(
@@ -943,10 +963,6 @@ plt.ylabel('Residual')
 plt.grid(True, alpha=0.3)
 plt.show()
 
-import matplotlib.pyplot as plt
-import pandas as pd
-import seaborn as sns
-
 # Obtener importancias
 importances = rf_model.feature_importances_
 features = X.columns
@@ -961,12 +977,19 @@ plt.ylabel('Feature')
 plt.tight_layout()
 plt.show()
 
-import scipy.stats as stats
-import matplotlib.pyplot as plt
-
 stats.probplot(residuals, dist="norm", plot=plt)
 plt.title("Q-Q Plot of Residuals (Random Forest)")
 plt.show()
+
+#SE AGREGA (NUEVO)
+
+
+model = RandomForestRegressor()
+
+visualizer = PredictionError(model)
+visualizer.fit(X_train, y_train)  # Mostrar los datos de prueba
+visualizer.score(X_test, y_test)  # Evaluar el modelo en estos datos de prueba
+visualizer.show()                 # Mostrar la gráfica
 
 """#Gradient Boosting Regressor"""
 
@@ -1009,12 +1032,6 @@ print(f"MSE:      {mse_test:.2f}")
 print(f"RMSE:     {rmse_test:.2f}")
 
 """#XGBOST"""
-
-# 1. Importar librerías necesarias
-from xgboost import XGBRegressor
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
-import numpy as np
 
 # 2. Definir X (features) e y (target)
 X = data_encoded[[
@@ -1064,9 +1081,6 @@ print(f"RMSE:     {rmse:.2f}")
 
 """# Comparación de valores reales y predichos (XGBoost)"""
 
-import matplotlib.pyplot as plt
-import numpy as np
-
 # Asegúrate de tener las predicciones hechas antes de esto:
 # y_pred = xgb_model.predict(X_test)
 
@@ -1094,3 +1108,173 @@ plt.legend()
 plt.grid(True, alpha=0.2)
 plt.tight_layout()
 plt.show()
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import xgboost as xgb
+
+# xgb_model = XGBRegressor()
+# xgb_model.fit(X_train, y_train)
+
+# Obtener importancias
+importance = xgb_model.feature_importances_
+
+# Crear DataFrame con nombres de las columnas
+feature_importance_df = pd.DataFrame({
+    'Feature': X_train.columns,
+    'Importance': importance
+})
+
+# Ordenar de mayor a menor
+feature_importance_df = feature_importance_df.sort_values(by='Importance', ascending=False)
+
+# Mostrar las más importantes
+print(feature_importance_df.head(10))
+
+plt.show()
+
+from xgboost import plot_importance
+
+plt.figure(figsize=(10, 6))
+plot_importance(xgb_model, max_num_features=10, importance_type='weight', height=0.6)
+plt.title("Top 10 Features más importantes (XGBoost)")
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.tight_layout()
+plt.show()
+
+"""#PREDICCION INDIVIDUAL
+
+DESPUES DE SELECCIONAR EL MODELO QUE MEJOR PREDIJO EN ESTE CASO EL XGBOOST , HAREMOS UNAS PREDICIONES UNITARIAS , INSERTANDO LAS VARIABLES NOSOTROS MISMOS , ES DECIR VALOR POR VALOR
+"""
+
+#PREDICCION XGBOOST CON SOLO 6 VARIABLES
+from xgboost import XGBRegressor
+
+# Lista de variables seleccionadas
+features = [
+    'econ_opportunity_index',
+    'global_development_resilience_index',
+    'global_resilience_score',
+    'internet_usage_pct',
+    'co2_emissions_per_capita_tons',
+    'life_expectancy'
+]
+
+# Definir X (features) e y (variable objetivo)
+X = data_encoded[features]
+y = data_encoded['gdp_per_capita']
+
+# Dividir en entrenamiento y prueba
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Entrenar modelo
+xgb_model6 = XGBRegressor()
+xgb_model6.fit(X_train, y_train)
+
+def gdp_prediction(xgb_model,
+                   econ_opportunity_index,
+                   global_development_resilience_index,
+                   global_resilience_score,
+                   internet_usage_pct,
+                   co2_emissions_per_capita_tons,
+                   life_expectancy):
+    """
+    Predict GDP per capita given six feature values.
+
+    Args:
+        xgb_model:       El modelo XGBRegressor ya entrenado.
+        econ_opportunity_index (float):                    Índice de oportunidad económica.
+        global_development_resilience_index (float):       Índice global de resiliencia al desarrollo.
+        global_resilience_score (float):                   Puntuación de resiliencia global.
+        internet_usage_pct (float):                        Porcentaje de uso de internet.
+        co2_emissions_per_capita_tons (float):             Emisiones de CO₂ per cápita (en toneladas).
+        life_expectancy (float):                           Esperanza de vida.
+
+    Returns:
+        float: Predicción de PIB per cápita.
+    """
+    # Construimos la “instancia” con los valores en el mismo orden en que entrenamos:
+    instancia = [[
+        econ_opportunity_index,
+        global_development_resilience_index,
+        global_resilience_score,
+        internet_usage_pct,
+        co2_emissions_per_capita_tons,
+        life_expectancy
+    ]]
+
+    # Devolvemos el primer elemento porque predict() regresa una lista de tamaño 1
+    return xgb_model.predict(instancia)[0]
+
+prediccion = gdp_prediction(
+    xgb_model6,
+    econ_opportunity_index=5564097.86,
+    global_development_resilience_index=4072936.60,
+    global_resilience_score=0.3668,
+    internet_usage_pct=2207532.99,
+    co2_emissions_per_capita_tons=14690903.71,
+    life_expectancy=72.945
+)
+
+print(f"Predicción de PIB per cápita: {prediccion:.2f}")
+
+prediccion = gdp_prediction(
+    xgb_model6,
+    econ_opportunity_index=-1,
+    global_development_resilience_index=-1,
+    global_resilience_score=-1,
+    internet_usage_pct=-1,
+    co2_emissions_per_capita_tons=-1,
+    life_expectancy=-1
+)
+
+print(f"Predicción de PIB per cápita: {prediccion:.2f}")
+
+prediccion = gdp_prediction(
+    xgb_model6,
+    econ_opportunity_index=-1,
+    global_development_resilience_index=-1,
+    global_resilience_score=-1,
+    internet_usage_pct=-1,
+    co2_emissions_per_capita_tons=-1,
+    life_expectancy=-1
+)
+
+print(f"Predicción de PIB per cápita: {prediccion:.2f}")
+
+# Ejemplo de entrada “plausible”:
+pred = gdp_prediction(
+    xgb_model6,
+    econ_opportunity_index=5500,                 # Índice de oportunidad económica
+    global_development_resilience_index=4000,    # Índice de resiliencia al desarrollo
+    global_resilience_score=0.4,                 # Puntuación de resiliencia global
+    internet_usage_pct=80,                       # 80% uso de internet
+    co2_emissions_per_capita_tons=5,             # 5 toneladas de CO₂ per cápita
+    life_expectancy=72                           # 72 años de esperanza de vida
+)
+print(f"Predicción de PIB per cápita (ejemplo): {pred:.2f} USD")
+
+# from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+# import numpy as np
+
+# # Predicciones
+# y_pred_train = xgb_model.predict(X_train)
+# y_pred_test = xgb_model.predict(X_test)
+
+# # Métricas
+# r2_train = r2_score(y_train, y_pred_train)
+# r2_test = r2_score(y_test, y_pred_test)
+# mae = mean_absolute_error(y_test, y_pred_test)
+# mse = mean_squared_error(y_test, y_pred_test)
+# rmse = np.sqrt(mse)
+
+# print(f"R² Train: {r2_train:.4f}")
+# print(f"R² Test:  {r2_test:.4f}")
+# print(f"MAE:      {mae:.2f}")
+# print(f"MSE:      {mse:.2f}")
+# print(f"RMSE:     {rmse:.2f}")
+
+"""#PREDICION INDIVIDUAL CON OTRAS VARIABLES"""
+
+#PREDICION INDIVIDUAL CON OTRAS A
