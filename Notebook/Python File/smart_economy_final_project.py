@@ -1207,6 +1207,10 @@ def gdp_prediction(xgb_model,
     # Devolvemos el primer elemento porque predict() regresa una lista de tamaño 1
     return xgb_model.predict(instancia)[0]
 
+"""EXPERIMENTOS CON VALORES
+
+"""
+
 prediccion = gdp_prediction(
     xgb_model6,
     econ_opportunity_index=5564097.86,
@@ -1233,27 +1237,43 @@ print(f"Predicción de PIB per cápita: {prediccion:.2f}")
 
 prediccion = gdp_prediction(
     xgb_model6,
-    econ_opportunity_index=-1,
-    global_development_resilience_index=-1,
-    global_resilience_score=-1,
-    internet_usage_pct=-1,
-    co2_emissions_per_capita_tons=-1,
-    life_expectancy=-1
+    econ_opportunity_index=-0,
+    global_development_resilience_index=-0,
+    global_resilience_score=-0,
+    internet_usage_pct=-0,
+    co2_emissions_per_capita_tons=-0,
+    life_expectancy=-0
 )
 
 print(f"Predicción de PIB per cápita: {prediccion:.2f}")
 
-# Ejemplo de entrada “plausible”:
 pred = gdp_prediction(
     xgb_model6,
-    econ_opportunity_index=5500,                 # Índice de oportunidad económica
-    global_development_resilience_index=4000,    # Índice de resiliencia al desarrollo
-    global_resilience_score=0.4,                 # Puntuación de resiliencia global
-    internet_usage_pct=80,                       # 80% uso de internet
-    co2_emissions_per_capita_tons=5,             # 5 toneladas de CO₂ per cápita
-    life_expectancy=72                           # 72 años de esperanza de vida
+    econ_opportunity_index=5500,      #   # Mide acceso a empleo, educación y movilidad económica (escala 0–10000)
+    global_development_resilience_index=4000,  #Evalúa capacidad de un país para sostener su desarrollo ante crisis (escala 0–10000)
+    global_resilience_score=0.4,      # Nivel general de resiliencia social, económica y ambiental (rango 0.0–1.0)
+    internet_usage_pct=80,            # % de la población que usa internet
+    co2_emissions_per_capita_tons=5,  # Toneladas métricas por persona al año
+    life_expectancy=72                # Años de vida promedio al nacer
 )
-print(f"Predicción de PIB per cápita (ejemplo): {pred:.2f} USD")
+print(f"Predicción de PIB per cápita: {pred:.2f} USD")
+
+"""En conclusion esta prediciendo un pib per capita a paises muy desarrollados como Suiza, Noruega, Luxemburgo, Irlanda
+
+"""
+
+#VALORES QUE PUEDEN SIMULAR EL PIB PER CAPITA DE COLOMBIA
+# prediccion = gdp_prediction(
+#     xgb_model6,
+#     econ_opportunity_index=0.45,
+#     global_development_resilience_index=0.40,
+#     global_resilience_score=0.42,
+#     internet_usage_pct=68.0,
+#     co2_emissions_per_capita_tons=1.8,
+#     life_expectancy=74.0
+# )
+
+# print(f"Predicción de PIB per cápita: {prediccion:.2f} USD")
 
 # from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 # import numpy as np
@@ -1275,6 +1295,47 @@ print(f"Predicción de PIB per cápita (ejemplo): {pred:.2f} USD")
 # print(f"MSE:      {mse:.2f}")
 # print(f"RMSE:     {rmse:.2f}")
 
-"""#PREDICION INDIVIDUAL CON OTRAS VARIABLES"""
+"""#PREDICION INDIVIDUAL CON OTRAS VARIABLES (EXPERIMENTO 2)"""
 
-#PREDICION INDIVIDUAL CON OTRAS A
+#PREDICION INDIVIDUAL CON OTRAS VARIABLES
+from xgboost import XGBRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
+
+# 1. Seleccionar variables simples
+features = [
+    'internet_usage_pct',
+    'life_expectancy',
+    'school_enrollment_secondary',
+    'co2_emissions_per_capita_tons',
+    'income_group_High income' , # Esta debe estar codificada (0 o 1)
+    'unemployment_rate'    # Porcentaje de la fuerza laboral desempleada
+]
+X = data_encoded[features]
+y = data_encoded['gdp_per_capita']
+
+# 2. Separar datos
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 3. Entrenar modelo
+xgb_simple = XGBRegressor()
+xgb_simple.fit(X_train, y_train)
+
+# 4. Evaluar
+y_pred = xgb_simple.predict(X_test)
+
+# print(f"R²: {r2_score(y_test, y_pred):.4f}")
+# print(f"MAE: {mean_absolute_error(y_test, y_pred):.2f}")
+# print(f"RMSE: {mean_squared_error(y_test, y_pred, squared=False):.2f}")
+
+# Valores ejemplo
+prediccion = xgb_simple.predict([[
+    69.0,   # % de población que usa internet
+    73.0,   # Esperanza de vida
+    85.0,   # Matrícula escolar secundaria
+    1.9,    # Emisiones CO₂ per cápita
+    0,      # No es país de alto ingreso
+    10.0    # 10% tasa de desempleo
+]])
+
+print(f"Predicción de PIB per cápita: {prediccion[0]:.2f} USD")
